@@ -1,97 +1,185 @@
-// URL de Google Sheets exportado como CSV desde Google Drive
-const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1P9lEX2BzIqvlCXeV2CRgrMufqOIvb6V6/export?format=csv";
+// URL directa para descargar el CSV desde tu Google Drive
+const DRIVE_EXCEL_CSV_URL = "https://docs.google.com/spreadsheets/d/1P9lEX2BzIqvlCXeV2CRgrMufqOIvb6V6/export?format=csv";
+
+let datosExcelGlobal = [];
+let chartFacturadoInstance = null;
+let chartConsumoInstance = null;
 
 window.initViewCharts = function(viewName) {
   if (viewName === 'analisis-cfe') {
-    cargarDatosCfe();
+    cargarExcelDesdeDrive();
   }
 };
 
-async function cargarDatosCfe() {
+async function cargarExcelDesdeDrive() {
   try {
-    const res = await fetch(GOOGLE_SHEETS_CSV_URL);
-    if (!res.ok) throw new Error("No se pudo descargar la hoja de Google Drive");
+    const res = await fetch(DRIVE_EXCEL_CSV_URL);
+    if (!res.ok) throw new Error("Error respondiendo Drive CSV");
+    const csvData = await res.text();
     
-    const csvText = await res.text();
-    procesarDatosExcel(csvText);
+    datosExcelGlobal = parsearCSV(csvData);
+    poblarSelectores();
   } catch (err) {
-    console.warn("Cargando datos estáticos de demostración:", err.message);
-    // Datos por defecto si el enlace a Drive es privado o falla la conexión
-    renderInterfazCfe({
-      consumoBase: 45200, consumoInter: 38100, consumoPunta: 12400,
-      demandaBase: 210, demandaInter: 195, demandaPunta: 180,
-      byd: 18, sunwin: 20,
-      suministro: 1250.00, distribucion: 15400.00, transmision: 8900.00, cenace: 450.00, capacidad: 22100.00,
-      cargoFijo: 1250.00, bonif: -2100.00, iva: 18400.00, total: 133400.00
-    });
+    console.error("No se pudo descargar automáticamente de Drive (verifica permisos 'cualquier persona con el enlace'):", err);
   }
 }
 
-function renderInterfazCfe(d) {
-  // Renderizar valores en DOM
-  const el = id => document.getElementById(id);
-  if (!el('cBase')) return;
+// Lector de CSV
+function parsearCSV(text) {
+  const lines = text.split('\n').filter(l => l.trim() !== '');
+  if (lines.length < 2) return [];
 
-  el('cBase').innerText = d.consumoBase.toLocaleString();
-  el('cInter').innerText = d.consumoInter.toLocaleString();
-  el('cPunta').innerText = d.consumoPunta.toLocaleString();
-  el('cTotal').innerText = (d.consumoBase + d.consumoInter + d.consumoPunta).toLocaleString();
+  const parseVal = v => {
+    if (!v) return 0;
+    let clean = v.replace(/[\$\,\%\s]/g, '');
+    return parseFloat(clean) || 0;
+  };
 
-  el('dBase').innerText = d.demandaBase;
-  el('dInter').innerText = d.demandaInter;
-  el('dPunta').innerText = d.demandaPunta;
-  el('dMax').innerText = Math.max(d.demandaBase, d.demandaInter, d.demandaPunta);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    // Expresión regular para separar respetando comillas
+    const cols = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+    if (!cols || cols.length < 23) continue;
 
-  el('uByd').innerText = d.byd;
-  el('uSunwin').innerText = d.sunwin;
+    const c = cols.map(item => item.replace(/^"|"$/g, '').trim());
 
-  const fmt = v => `$${v.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
-  el('fSuministro').innerText = fmt(d.suministro);
-  el('fDistribucion').innerText = fmt(d.distribucion);
-  el('fTransmision').innerText = fmt(d.transmision);
-  el('fCenace').innerText = fmt(d.cenace);
-  el('fCapacidad').innerText = fmt(d.capacidad);
-  
-  const totalEnergia = d.suministro + d.distribucion + d.transmision + d.cenace + d.capacidad;
-  el('fTotalEnergia').innerText = fmt(totalEnergia);
+    rows.push({
+      anio: c[0],
+      periodo: c[1],
+      consumoBaseKwh: parseVal(c[2]),
+      consumoIntermedioKwh: parseVal(c[3]),
+      consumoPuntaKwh: parseVal(c[4]),
+      demandaBaseKw: parseVal(c[5]),
+      demandaIntermedioKw: parseVal(c[6]),
+      demandaPuntaKw: parseVal(c[7]),
+      demandaMaximaKw: parseVal(c[8]),
+      factorPotencia: parseVal(c[9]),
+      costoPorKw: parseVal(c[10]),
+      suministro: parseVal(c[11]),
+      distribucion: parseVal(c[12]),
+      transmision: parseVal(c[13]),
+      cenace: parseVal(c[14]),
+      generacionBase: parseVal(c[15]),
+      generacionIntermedia: parseVal(c[16]),
+      generacionPunta: parseVal(c[17]),
+      capacidad: parseVal(c[18]),
+      scnmem: parseVal(c[19]),
+      bonificacionFactorPotencia: parseVal(c[20]),
+      totalFacturado: parseVal(c[21]),
+      unidadesBYD: parseVal(c[22]),
+      unidadesSunwin: parseVal(c[23])
+    });
+  }
+  return rows;
+}
 
-  el('rCargoFijo').innerText = fmt(d.cargoFijo);
-  el('rEnergia').innerText = fmt(totalEnergia);
-  el('rBonif').innerText = fmt(d.bonif);
-  
-  const subtotal = d.cargoFijo + totalEnergia + d.bonif;
-  el('rSubtotal').innerText = fmt(subtotal);
-  el('rIva').innerText = fmt(d.iva);
-  el('rTotal').innerText = fmt(subtotal + d.iva);
+function poblarSelectores() {
+  const selectAnio = document.getElementById('selectAnio');
+  const selectPeriodo = document.getElementById('selectPeriodo');
+  if (!selectAnio || !selectPeriodo) return;
 
-  // Inicializar Gráficos Históricos
+  const anios = [...new Set(datosExcelGlobal.map(d => d.anio))];
+  selectAnio.innerHTML = anios.map(a => `<option value="${a}">${a}</option>`).join('');
+
+  function actualizarPeriodos() {
+    const anioSel = selectAnio.value;
+    const periodos = datosExcelGlobal.filter(d => d.anio === anioSel);
+    selectPeriodo.innerHTML = periodos.map(p => `<option value="${p.periodo}">${p.periodo}</option>`).join('');
+    
+    if (periodos.length > 0) {
+      actualizarVistaFactura(periodos[0]);
+    }
+  }
+
+  selectAnio.onchange = actualizarPeriodos;
+  selectPeriodo.onchange = () => {
+    const item = datosExcelGlobal.find(d => d.anio === selectAnio.value && d.periodo === selectPeriodo.value);
+    if (item) actualizarVistaFactura(item);
+  };
+
+  actualizarPeriodos();
   renderGraficosHistoricos();
 }
 
+function actualizarVistaFactura(f) {
+  const el = id => document.getElementById(id);
+  const fmtMoney = v => `$${v.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtNum = v => v.toLocaleString('es-MX');
+
+  el('tituloPeriodo').innerText = `COSTE ENERGÍA ELÉCTRICA ${f.periodo} (DESGLOSE)`;
+
+  el('cBase').innerText = fmtNum(f.consumoBaseKwh);
+  el('cInter').innerText = fmtNum(f.consumoIntermedioKwh);
+  el('cPunta').innerText = fmtNum(f.consumoPuntaKwh);
+  
+  const consumoTotal = f.consumoBaseKwh + f.consumoIntermedioKwh + f.consumoPuntaKwh;
+  el('cTotal').innerText = fmtNum(consumoTotal);
+
+  el('dBase').innerText = fmtNum(f.demandaBaseKw);
+  el('dInter').innerText = fmtNum(f.demandaIntermedioKw);
+  el('dPunta').innerText = fmtNum(f.demandaPuntaKw);
+  el('dMax').innerText = fmtNum(f.demandaMaximaKw);
+
+  el('costoKw').innerText = fmtMoney(f.costoPorKw);
+  el('factorPotencia').innerText = `${f.factorPotencia}%`;
+
+  el('uByd').innerText = f.unidadesBYD;
+  el('uSunwin').innerText = f.unidadesSunwin;
+
+  // Desglose CFE
+  el('fSuministro').innerText = fmtMoney(f.suministro);
+  el('fDistribucion').innerText = fmtMoney(f.distribucion);
+  el('fTransmision').innerText = fmtMoney(f.transmision);
+  el('fCenace').innerText = fmtMoney(f.cenace);
+  el('fGenBase').innerText = fmtMoney(f.generacionBase);
+  el('fGenInter').innerText = fmtMoney(f.generacionIntermedia);
+  el('fGenPunta').innerText = fmtMoney(f.generacionPunta);
+  el('fCapacidad').innerText = fmtMoney(f.capacidad);
+  el('fScnmem').innerText = fmtMoney(f.scnmem);
+
+  const totalEnergia = f.suministro + f.distribucion + f.transmision + f.cenace + f.generacionBase + f.generacionIntermedia + f.generacionPunta + f.capacidad + f.scnmem;
+  el('fTotalEnergia').innerText = fmtMoney(totalEnergia);
+
+  // Resumen
+  el('rCargoFijo').innerText = fmtMoney(f.suministro);
+  el('rEnergia').innerText = fmtMoney(totalEnergia - f.suministro);
+  el('rBonif').innerText = fmtMoney(f.bonificacionFactorPotencia);
+  
+  const subtotal = totalEnergia + f.bonificacionFactorPotencia;
+  const iva = subtotal * 0.16;
+  el('rSubtotal').innerText = fmtMoney(subtotal);
+  el('rIva').innerText = fmtMoney(iva);
+  el('rTotal').innerText = fmtMoney(f.totalFacturado || (subtotal + iva));
+}
+
 function renderGraficosHistoricos() {
-  const ctxFacturado = document.getElementById('chartHistoricoFacturado');
-  const ctxConsumo = document.getElementById('chartHistoricoConsumo');
-  if (!ctxFacturado || !ctxConsumo) return;
+  const ctx1 = document.getElementById('chartHistoricoFacturado');
+  const ctx2 = document.getElementById('chartHistoricoConsumo');
+  if (!ctx1 || !ctx2) return;
 
-  const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+  if (chartFacturadoInstance) chartFacturadoInstance.destroy();
+  if (chartConsumoInstance) chartConsumoInstance.destroy();
 
-  new Chart(ctxFacturado, {
+  const labels = datosExcelGlobal.map(d => `${d.periodo.split('-')[0].trim()}`);
+  const facturado = datosExcelGlobal.map(d => d.totalFacturado);
+
+  chartFacturadoInstance = new Chart(ctx1, {
     type: 'bar',
     data: {
       labels: labels,
-      datasets: [{ label: 'Total $', data: [120000, 135000, 128000, 142000, 133400, 139000], backgroundColor: '#38bdf8', borderRadius: 4 }]
+      datasets: [{ label: 'Facturado ($)', data: facturado, backgroundColor: '#38bdf8', borderRadius: 4 }]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
   });
 
-  new Chart(ctxConsumo, {
+  chartConsumoInstance = new Chart(ctx2, {
     type: 'bar',
     data: {
       labels: labels,
       datasets: [
-        { label: 'Base', data: [40000, 42000, 41000, 43000, 45200, 44000], backgroundColor: '#059669' },
-        { label: 'Intermedio', data: [35000, 36000, 34000, 37000, 38100, 36500], backgroundColor: '#0284c7' },
-        { label: 'Punta', data: [10000, 11000, 10500, 12000, 12400, 11800], backgroundColor: '#d97706' }
+        { label: 'Base', data: datosExcelGlobal.map(d => d.consumoBaseKwh), backgroundColor: '#059669' },
+        { label: 'Intermedio', data: datosExcelGlobal.map(d => d.consumoIntermedioKwh), backgroundColor: '#0284c7' },
+        { label: 'Punta', data: datosExcelGlobal.map(d => d.consumoPuntaKwh), backgroundColor: '#d97706' }
       ]
     },
     options: {
