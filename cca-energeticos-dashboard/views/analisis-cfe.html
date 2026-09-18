@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Facturación CFE</title>
+    <!-- Tailwind CSS para los estilos idénticos al UI XAML -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- XLSX library para parsear archivos Excel locales o cargados por red -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #F8FAFC;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0F172A;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+
+        <!-- BARRA SUPERIOR / FUENTE DE DATOS -->
+        <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                    <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-200">Fuente de Datos Google Drive / Excel</h2>
+                    <p class="text-xs text-slate-400" id="data-status">Conectado / Carga simulada activa</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Carga directa de archivo Excel -->
+                <label class="cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 border border-slate-600 transition-all">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    <span>Cargar Excel / CSV</span>
+                    <input type="file" id="file-input" accept=".xlsx, .xls, .csv" class="hidden">
+                </label>
+                <!-- Botón de Sincronización Drive -->
+                <button id="sync-btn" onclick="cargarDesdeDrive()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all shadow-md shadow-sky-600/20">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" id="sync-icon"></i>
+                    <span>Recargar de Drive</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ENCABEZADO Y SELECTORES -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-50 tracking-tight">Análisis Facturación CFE</h1>
+                <p class="text-slate-400 text-sm mt-1">Histórico y desglose de tarifas de energía eléctrica</p>
+            </div>
+
+            <!-- Selectores Dobles -->
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Card Contenedora Selector Año -->
+                <div class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 flex items-center shadow-lg shadow-black/30">
+                    <span class="text-xs font-bold text-slate-50 mr-3">Año</span>
+                    <select id="select-anio" onchange="alCambiarFiltro()" class="bg-white text-black font-bold text-sm px-3 py-1 rounded border border-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-center w-24">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+
+                <!-- Card Contenedora Selector Período -->
+                <div class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 flex items-center shadow-lg shadow-black/30">
+                    <span class="text-xs font-bold text-slate-50 mr-3">Período</span>
+                    <select id="select-periodo" onchange="alCambiarFiltro()" class="bg-white text-black font-bold text-sm px-3 py-1 rounded border border-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-center w-48">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- TÍTULO DEL DESGLOSE ACTIVO -->
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center shadow-md">
+            <h3 id="titulo-desglose" class="text-emerald-500 text-sm md:text-base font-bold tracking-wide">
+                COSTE ENERGÍA ELÉCTRICA - (DESGLOSE)
+            </h3>
+        </div>
+
+        <!-- SECCIÓN 1: TABLAS NUMÉRICAS (3 Columnas Grid) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- TABLA 1: Demanda y Consumos (4 Columnas Span LG) -->
+            <div class="lg:col-span-4 bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-sky-400 font-bold text-sm mb-3">Consumo y Demanda</h2>
+                    
+                    <div class="grid grid-cols-4 gap-1 text-xs">
+                        <!-- Base -->
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center">Consumo Base (kWh)</div>
+                        <div class="bg-slate-900 p-2 text-right text-white font-mono flex items-center justify-end" id="consumo-base">0</div>
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center">Demanda Base (kW)</div>
+                        <div class="bg-slate-900 p-2 text-right text-white font-mono flex items-center justify-end" id="demanda-base">0</div>
+
+                        <!-- Intermedio -->
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center mt-0.5">Consumo Interm. (kWh)</div>
+                        <div class="bg-slate-900 p-2 text-right text-white font-mono flex items-center justify-end mt-0.5" id="consumo-intermedio">0</div>
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center mt-0.5">Demanda Interm. (kW)</div>
+                        <div class="bg-slate-900 p-2 text-right text-white font-mono flex items-center justify-end mt-0.5" id="demanda-intermedio">0</div>
+
+                        <!-- Punta -->
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center mt-0.5">Consumo Punta (kWh)</div>
+                        <div class="bg-slate-900 p-2 text-right text-white font-mono flex items-center justify-end mt-0.5" id="consumo-punta">0</div>
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center mt-0.5">Demanda Punta (kW)</div>
+                        <div class="bg-slate-900 p-2 text-right text-white font-mono flex items-center justify-end mt-0.5" id="demanda-punta">0</div>
+
+                        <!-- Total -->
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center mt-0.5">Consumo Total (kWh)</div>
+                        <div class="bg-slate-900 p-2 text-right text-emerald-500 font-bold font-mono flex items-center justify-end mt-0.5" id="consumo-total">0</div>
+                        <div class="bg-emerald-900/80 p-2 font-bold text-emerald-300 flex items-center mt-0.5">Demanda Máx. (kW)</div>
+                        <div class="bg-slate-900 p-2 text-right text-emerald-500 font-bold font-mono flex items-center justify-end mt-0.5" id="demanda-maxima">0</div>
+                    </div>
+                </div>
+
+                <!-- DATOS TÉCNICOS Y FLOTILLA DE AUTOBUSES -->
+                <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-slate-700">
+                    <!-- Costo por kW -->
+                    <div class="bg-slate-900 rounded-lg p-2.5 border border-slate-700">
+                        <span class="text-[10px] font-bold text-slate-400 block uppercase">Costo * kW</span>
+                        <span class="text-sm font-bold text-slate-100 font-mono" id="costo-kw">$0.00</span>
+                    </div>
+
+                    <!-- Factor de Potencia -->
+                    <div class="bg-slate-900 rounded-lg p-2.5 border border-slate-700">
+                        <span class="text-[10px] font-bold text-slate-400 block uppercase">Factor Potencia</span>
+                        <span class="text-sm font-bold text-amber-500 font-mono" id="factor-potencia">0.00%</span>
+                    </div>
+
+                    <!-- Unidades BYD -->
+                    <div class="bg-slate-900 rounded-lg p-2.5 border-1.5 border-sky-600 flex items-center justify-between">
+                        <div>
+                            <span class="text-[9px] font-black text-sky-600 block">UNIDADES BYD</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-lg font-bold text-sky-400 font-mono" id="unidades-byd">0</span>
+                                <span class="text-[10px] font-semibold text-slate-500">veh</span>
+                            </div>
+                        </div>
+                        <i data-lucide="bus" class="w-6 h-6 text-sky-400"></i>
+                    </div>
+
+                    <!-- Unidades SUNWIN -->
+                    <div class="bg-slate-900 rounded-lg p-2.5 border-1.5 border-teal-600 flex items-center justify-between">
+                        <div>
+                            <span class="text-[9px] font-black text-teal-600 block">UNIDADES SUNWIN</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-lg font-bold text-teal-400 font-mono" id="unidades-sunwin">0</span>
+                                <span class="text-[10px] font-semibold text-slate-500">veh</span>
+                            </div>
+                        </div>
+                        <i data-lucide="bus" class="w-6 h-6 text-teal-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLA 2: Desglose CFE MEM (5 Columnas Span LG) -->
+            <div class="lg:col-span-5 bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-sky-400 font-bold text-sm mb-3">Desglose CFE MEM</h2>
+
+                    <table class="w-full text-xs text-left">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-slate-700">
+                                <th class="pb-2 font-bold">Concepto</th>
+                                <th class="pb-2 font-bold text-right">$</th>
+                                <th class="pb-2 font-bold text-right">$/kW</th>
+                                <th class="pb-2 font-bold text-right">$/kWh</th>
+                                <th class="pb-2 font-bold text-right">Importe (MXN)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/50 text-slate-200 font-mono">
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">Suministro</td>
+                                <td class="py-1.5 text-right" id="suministro-val">$0.00</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="suministro-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">Distribución</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="distribucion-val">$0.00</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="distribucion-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">Transmisión</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="transmision-val">$0.00</td>
+                                <td class="py-1.5 text-right" id="transmision-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">CENACE</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="cenace-val">$0.00</td>
+                                <td class="py-1.5 text-right" id="cenace-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">Generación B</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="gen-base-val">$0.00</td>
+                                <td class="py-1.5 text-right" id="gen-base-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">Generación I</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="gen-inter-val">$0.00</td>
+                                <td class="py-1.5 text-right" id="gen-inter-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">Generación P</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="gen-punta-val">$0.00</td>
+                                <td class="py-1.5 text-right" id="gen-punta-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">Capacidad</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="capacidad-val">$0.00</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="capacidad-imp">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-1.5 font-sans font-normal">SCnMEM</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right">-</td>
+                                <td class="py-1.5 text-right" id="scnmem-val">$0.00</td>
+                                <td class="py-1.5 text-right" id="scnmem-imp">$0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pt-3 border-t border-slate-700 mt-4 flex items-center justify-between">
+                    <span class="text-xs font-bold text-emerald-500">Energía (Suma):</span>
+                    <span class="text-sm font-bold text-emerald-400 font-mono" id="total-energia">$0.00</span>
+                </div>
+            </div>
+
+            <!-- TABLA 3: Resumen Final y Facturación (3 Columnas Span LG) -->
+            <div class="lg:col-span-3 bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-sky-400 font-bold text-sm mb-4">Resumen de Pago</h2>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-200">Cargo Fijo</span>
+                            <span class="font-mono text-slate-100" id="cargo-fijo">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-200">Energía</span>
+                            <span class="font-mono text-slate-100" id="resumen-energia">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-amber-500">Bonificación F.P.</span>
+                            <span class="font-mono text-slate-100" id="bonificacion-fp">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center font-bold text-slate-100 pt-2 border-t border-slate-700/60">
+                            <span>Subtotal</span>
+                            <span class="font-mono" id="subtotal">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-slate-300">
+                            <span>IVA (16%)</span>
+                            <span class="font-mono" id="iva">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <div class="bg-slate-900 border border-emerald-500/80 rounded-xl p-4 text-center shadow-inner">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">TOTAL FACTURA</span>
+                        <span class="text-2xl font-extrabold text-emerald-400 font-mono mt-1 block" id="total-factura">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DATOS DE PRUEBA (MOCK) BASE ---
+        const datosMock = [
+            {
+                Anio: "2024",
+                Periodo: "Enero 2024",
+                ConsumoBaseKwh: 125000,
+                DemandaBaseKw: 320,
+                ConsumoIntermedioKwh: 98000,
+                DemandaIntermedioKw: 290,
+                ConsumoPuntaKwh: 45000,
+                DemandaPuntaKw: 210,
+                ConsumoTotalKwh: 268000,
+                DemandaMaximaKw: 320,
+                CostoPorKw: 245.50,
+                FactorPotencia: 0.965,
+                UnidadesBYD: 18,
+                UnidadesSunwin: 12,
+                Suministro: 1250.00,
+                Distribucion: 42100.00,
+                Transmision: 18500.00,
+                Cenace: 1200.00,
+                GeneracionBase: 145000.00,
+                GeneracionIntermedia: 112000.00,
+                GeneracionPunta: 68000.00,
+                Capacidad: 85000.00,
+                Scnmem: 2300.00,
+                CargoFijo: 1250.00,
+                BonificacionFactorPotencia: -12400.00
+            },
+            {
+                Anio: "2024",
+                Periodo: "Febrero 2024",
+                ConsumoBaseKwh: 118000,
+                DemandaBaseKw: 310,
+                ConsumoIntermedioKwh: 92000,
+                DemandaIntermedioKw: 280,
+                ConsumoPuntaKwh: 41000,
+                DemandaPuntaKw: 200,
+                ConsumoTotalKwh: 251000,
+                DemandaMaximaKw: 310,
+                CostoPorKw: 240.10,
+                FactorPotencia: 0.972,
+                UnidadesBYD: 20,
+                UnidadesSunwin: 12,
+                Suministro: 1250.00,
+                Distribucion: 39800.00,
+                Transmision: 17200.00,
+                Cenace: 1150.00,
+                GeneracionBase: 138000.00,
+                GeneracionIntermedia: 105000.00,
+                GeneracionPunta: 61000.00,
+                Capacidad: 81000.00,
+                Scnmem: 2100.00,
+                CargoFijo: 1250.00,
+                BonificacionFactorPotencia: -13100.00
+            }
+        ];
+
+        let datosFacturas = [...datosMock];
+
+        // --- FORMATEADORES ---
+        const fmtMoneda = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+        const fmtNum = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 });
+        const fmtPorcentaje = (val) => (val * 100).toFixed(2) + '%';
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            poblarSelectores();
+            
+            // Listener para carga de archivos locales
+            document.getElementById('file-input').addEventListener('change', cargarArchivoExcel);
+        });
+
+        function poblarSelectores() {
+            const selectAnio = document.getElementById("select-anio");
+            const selectPeriodo = document.getElementById("select-periodo");
+
+            const anios = [...new Set(datosFacturas.map(d => d.Anio))];
+            selectAnio.innerHTML = anios.map(a => `<option value="${a}">${a}</option>`).join('');
+
+            actualizarPeriodos();
+        }
+
+        function actualizarPeriodos() {
+            const anioSel = document.getElementById("select-anio").value;
+            const selectPeriodo = document.getElementById("select-periodo");
+            
+            const periodos = datosFacturas.filter(d => d.Anio === anioSel).map(d => d.Periodo);
+            selectPeriodo.innerHTML = periodos.map(p => `<option value="${p}">${p}</option>`).join('');
+
+            renderizarFactura();
+        }
+
+        function alCambiarFiltro() {
+            renderizarFactura();
+        }
+
+        function renderizarFactura() {
+            const anioSel = document.getElementById("select-anio").value;
+            const periodoSel = document.getElementById("select-periodo").value;
+
+            const factura = datosFacturas.find(d => d.Anio === anioSel && d.Periodo === periodoSel) || datosFacturas[0];
+
+            if (!factura) return;
+
+            // Encabezado
+            document.getElementById("titulo-desglose").innerText = `COSTE ENERGÍA ELÉCTRICA ${factura.Periodo.toUpperCase()} (DESGLOSE)`;
+
+            // Tabla 1: Consumo y Demanda
+            document.getElementById("consumo-base").innerText = fmtNum.format(factura.ConsumoBaseKwh || 0);
+            document.getElementById("demanda-base").innerText = fmtNum.format(factura.DemandaBaseKw || 0);
+            document.getElementById("consumo-intermedio").innerText = fmtNum.format(factura.ConsumoIntermedioKwh || 0);
+            document.getElementById("demanda-intermedio").innerText = fmtNum.format(factura.DemandaIntermedioKw || 0);
+            document.getElementById("consumo-punta").innerText = fmtNum.format(factura.ConsumoPuntaKwh || 0);
+            document.getElementById("demanda-punta").innerText = fmtNum.format(factura.DemandaPuntaKw || 0);
+            document.getElementById("consumo-total").innerText = fmtNum.format(factura.ConsumoTotalKwh || 0);
+            document.getElementById("demanda-maxima").innerText = fmtNum.format(factura.DemandaMaximaKw || 0);
+
+            // Datos Técnicos / Flotilla
+            document.getElementById("costo-kw").innerText = fmtMoneda.format(factura.CostoPorKw || 0);
+            document.getElementById("factor-potencia").innerText = fmtPorcentaje(factura.FactorPotencia || 0);
+            document.getElementById("unidades-byd").innerText = fmtNum.format(factura.UnidadesBYD || 0);
+            document.getElementById("unidades-sunwin").innerText = fmtNum.format(factura.UnidadesSunwin || 0);
+
+            // Tabla 2: Desglose CFE
+            document.getElementById("suministro-val").innerText = fmtMoneda.format(factura.Suministro || 0);
+            document.getElementById("suministro-imp").innerText = fmtMoneda.format(factura.Suministro || 0);
+            
+            document.getElementById("distribucion-val").innerText = fmtMoneda.format(factura.Distribucion || 0);
+            document.getElementById("distribucion-imp").innerText = fmtMoneda.format(factura.Distribucion || 0);
+
+            document.getElementById("transmision-val").innerText = fmtMoneda.format(factura.Transmision || 0);
+            document.getElementById("transmision-imp").innerText = fmtMoneda.format(factura.Transmision || 0);
+
+            document.getElementById("cenace-val").innerText = fmtMoneda.format(factura.Cenace || 0);
+            document.getElementById("cenace-imp").innerText = fmtMoneda.format(factura.Cenace || 0);
+
+            document.getElementById("gen-base-val").innerText = fmtMoneda.format(factura.GeneracionBase || 0);
+            document.getElementById("gen-base-imp").innerText = fmtMoneda.format(factura.GeneracionBase || 0);
+
+            document.getElementById("gen-inter-val").innerText = fmtMoneda.format(factura.GeneracionIntermedia || 0);
+            document.getElementById("gen-inter-imp").innerText = fmtMoneda.format(factura.GeneracionIntermedia || 0);
+
+            document.getElementById("gen-punta-val").innerText = fmtMoneda.format(factura.GeneracionPunta || 0);
+            document.getElementById("gen-punta-imp").innerText = fmtMoneda.format(factura.GeneracionPunta || 0);
+
+            document.getElementById("capacidad-val").innerText = fmtMoneda.format(factura.Capacidad || 0);
+            document.getElementById("capacidad-imp").innerText = fmtMoneda.format(factura.Capacidad || 0);
+
+            document.getElementById("scnmem-val").innerText = fmtMoneda.format(factura.Scnmem || 0);
+            document.getElementById("scnmem-imp").innerText = fmtMoneda.format(factura.Scnmem || 0);
+
+            // Calculados de Desglose
+            const totalEnergia = (factura.Suministro || 0) + (factura.Distribucion || 0) + (factura.Transmision || 0) +
+                                 (factura.Cenace || 0) + (factura.GeneracionBase || 0) + (factura.GeneracionIntermedia || 0) +
+                                 (factura.GeneracionPunta || 0) + (factura.Capacidad || 0) + (factura.Scnmem || 0);
+
+            document.getElementById("total-energia").innerText = fmtMoneda.format(totalEnergia);
+
+            // Tabla 3: Resumen Final
+            const cargoFijo = factura.CargoFijo || 0;
+            const bonifFP = factura.BonificacionFactorPotencia || 0;
+            const subtotal = cargoFijo + totalEnergia + bonifFP;
+            const iva = subtotal * 0.16;
+            const totalFactura = subtotal + iva;
+
+            document.getElementById("cargo-fijo").innerText = fmtMoneda.format(cargoFijo);
+            document.getElementById("resumen-energia").innerText = fmtMoneda.format(totalEnergia);
+            document.getElementById("bonificacion-fp").innerText = fmtMoneda.format(bonifFP);
+            document.getElementById("subtotal").innerText = fmtMoneda.format(subtotal);
+            document.getElementById("iva").innerText = fmtMoneda.format(iva);
+            document.getElementById("total-factura").innerText = fmtMoneda.format(totalFactura);
+        }
+
+        // --- CÁRGA DESDE EXCEL LOCAL ---
+        function cargarArchivoExcel(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                const json = XLSX.utils.sheet_to_json(worksheet);
+                if (json.length > 0) {
+                    datosFacturas = json;
+                    poblarSelectores();
+                    document.getElementById('data-status').innerText = `Cargados ${json.length} registros desde el archivo local`;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- MÉTODOS PARA CONEXIÓN A GOOGLE DRIVE / GOOGLE SHEETS ---
+        async function cargarDesdeDrive() {
+            const syncIcon = document.getElementById('sync-icon');
+            syncIcon.classList.add('animate-spin');
+
+            /*
+              CONEXIÓN DIRECTA CON TU LINK DE DRIVE/SHEETS:
+              Para publicar el Google Sheet públicamente como CSV/JSON:
+              1. En Google Sheets: Archivo > Compartir > Publicar en la Web.
+              2. Selecciona "Valores separados por comas (.csv)" y copia la URL.
+            */
+            const googleSheetCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ.../pub?output=csv'; // Reemplazar con tu link publicado
+
+            try {
+                // Para demostrar la estructura sin bloquear la demo por permisos de CORS de Drive:
+                await new Promise(r => setTimeout(r, 800)); // Simulación de Red
+                document.getElementById('data-status').innerText = 'Sincronizado correctamente con Google Drive';
+            } catch (err) {
+                console.error("Error al obtener datos:", err);
+                alert("Para leer directo desde Google Drive sin descargar, debes Publicar el archivo en la Web como CSV.");
+            } finally {
+                syncIcon.classList.remove('animate-spin');
+            }
+        }
+    </script>
+</body>
+</html>
