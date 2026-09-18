@@ -1,5 +1,5 @@
 // URL directa para descargar el CSV desde tu Google Drive
-const DRIVE_EXCEL_CSV_URL = "https://docs.google.com/spreadsheets/d/1P9lEX2BzIqvlCXeV2CRgrMufqOIvb6V6/export?format=csv";
+const DRIVE_EXCEL_CSV_URL = "https://docs.google.com/spreadsheets/d/1P9lEX2BzIqvlCXeV2CRgrMufqOIvb6V6/edit?usp=sharing&ouid=102792765386144797144&rtpof=true&sd=true/export?format=csv";
 
 let datosExcelGlobal = [];
 let chartFacturadoInstance = null;
