@@ -1,24 +1,37 @@
-let datosExcelGlobal = [];
+// BASE DE DATOS INCRUSTADA DIRECTAMENTE DESDE FACTURASCFE.XLSX
+const DATA_CFE = [
+  { anio: "2025", periodo: "MAYO - JUNIO", consumoBaseKwh: 226118, consumoIntermedioKwh: 90668, consumoPuntaKwh: 8795, demandaBaseKw: 3386, demandaIntermedioKw: 2476, demandaPuntaKw: 1924, demandaMaximaKw: 3386, factorPotencia: 99.95, costoPorKw: 3.09, suministro: 466.83, distribucion: 50911.28, transmision: 58897.61, cenace: 2116.28, generacionBase: 227904.33, generacionIntermedia: 163574.14, generacionPunta: 18845.05, capacidad: 351662.60, scnmem: 2018.60, bonificacionFactorPotencia: -10516.76, totalFacturado: 1004421.19, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2025", periodo: "JUNIO - JULIO", consumoBaseKwh: 262357, consumoIntermedioKwh: 93990, consumoPuntaKwh: 988, demandaBaseKw: 3534, demandaIntermedioKw: 2857, demandaPuntaKw: 612, demandaMaximaKw: 3534, factorPotencia: 99.93, costoPorKw: 2.70, suministro: 466.83, distribucion: 54053.16, transmision: 64641.90, cenace: 2322.68, generacionBase: 268391.21, generacionIntermedia: 172114.49, generacionPunta: 2148.70, capacidad: 275118.48, scnmem: 2215.48, bonificacionFactorPotencia: -10097.68, totalFacturado: 964395.48, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2025", periodo: "JULIO - AGOSTO", consumoBaseKwh: 253874, consumoIntermedioKwh: 111816, consumoPuntaKwh: 4525, demandaBaseKw: 3563, demandaIntermedioKw: 3033, demandaPuntaKw: 1275, demandaMaximaKw: 3563, factorPotencia: 99.94, costoPorKw: 3.08, suministro: 466.83, distribucion: 55976.76, transmision: 66971.89, cenace: 2406.39, generacionBase: 260093.91, generacionIntermedia: 205037.00, generacionPunta: 9854.55, capacidad: 392998.41, scnmem: 2295.34, bonificacionFactorPotencia: -11953.21, totalFacturado: 1141612.01, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2025", periodo: "AGOSTO - SEPTIEMBRE", consumoBaseKwh: 243788, consumoIntermedioKwh: 106509, consumoPuntaKwh: 5621, demandaBaseKw: 3327, demandaIntermedioKw: 3003, demandaPuntaKw: 1651, demandaMaximaKw: 3327, factorPotencia: 99.95, costoPorKw: 3.11, suministro: 466.83, distribucion: 55656.16, transmision: 64385.57, cenace: 3772.73, generacionBase: 247469.20, generacionIntermedia: 193526.85, generacionPunta: 12129.56, capacidad: 387171.40, scnmem: 2206.70, bonificacionFactorPotencia: -11601.42, totalFacturado: 1108012.96, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2025", periodo: "SEPTIEMBRE - OCTUBRE", consumoBaseKwh: 241305, consumoIntermedioKwh: 97509, consumoPuntaKwh: 18430, demandaBaseKw: 3272, demandaIntermedioKw: 2107, demandaPuntaKw: 1415, demandaMaximaKw: 3272, factorPotencia: 99.96, costoPorKw: 2.70, suministro: 466.83, distribucion: 54049.28, transmision: 64625.44, cenace: 3786.79, generacionBase: 244948.71, generacionIntermedia: 177173.85, generacionPunta: 39770.10, capacidad: 376001.60, scnmem: 2214.91, bonificacionFactorPotencia: -11556.45, totalFacturado: 963037.51, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2025", periodo: "OCTUBRE - NOVIEMBRE", consumoBaseKwh: 225049, consumoIntermedioKwh: 95125, consumoPuntaKwh: 18075, demandaBaseKw: 3426, demandaIntermedioKw: 2637, demandaPuntaKw: 1773, demandaMaximaKw: 3426, factorPotencia: 99.96, costoPorKw: 3.06, suministro: 466.83, distribucion: 52899.00, transmision: 61189.24, cenace: 3585.45, generacionBase: 221583.25, generacionIntermedia: 167648.30, generacionPunta: 37832.78, capacidad: 356944.50, scnmem: 2097.15, bonificacionFactorPotencia: -10850.96, totalFacturado: 1036339.82, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2025", periodo: "NOVIEMBRE - DICIEMBRE", consumoBaseKwh: 210978, consumoIntermedioKwh: 100072, consumoPuntaKwh: 23496, demandaBaseKw: 3514, demandaIntermedioKw: 3351, demandaPuntaKw: 2522, demandaMaximaKw: 3514, factorPotencia: 99.98, costoPorKw: 2.55, suministro: 466.83, distribucion: 50590.68, transmision: 60519.37, cenace: 3546.19, generacionBase: 197348.82, generacionIntermedia: 167550.55, generacionPunta: 46721.80, capacidad: 324302.67, scnmem: 2074.19, bonificacionFactorPotencia: -10237.45, totalFacturado: 853121.09, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "DICIEMBRE 2025 - ENERO 2026", consumoBaseKwh: 210978, consumoIntermedioKwh: 100072, consumoPuntaKwh: 23496, demandaBaseKw: 3514, demandaIntermedioKw: 3351, demandaPuntaKw: 2522, demandaMaximaKw: 3514, factorPotencia: 99.98, costoPorKw: 2.92, suministro: 466.83, distribucion: 50590.68, transmision: 60519.37, cenace: 3546.19, generacionBase: 197348.82, generacionIntermedia: 167550.55, generacionPunta: 46721.80, capacidad: 324302.67, scnmem: 2074.19, bonificacionFactorPotencia: -10237.45, totalFacturado: 977745.85, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "ENERO - FEBRERO", consumoBaseKwh: 241893, consumoIntermedioKwh: 115609, consumoPuntaKwh: 25638, demandaBaseKw: 3516, demandaIntermedioKw: 3094, demandaPuntaKw: 2168, demandaMaximaKw: 3516, factorPotencia: 99.97, costoPorKw: 2.99, suministro: 540.49, distribucion: 60880.82, transmision: 69003.51, cenace: 2911.87, generacionBase: 221307.91, generacionIntermedia: 189321.30, generacionPunta: 49863.35, capacidad: 402412.01, scnmem: 2643.66, bonificacionFactorPotencia: -11986.62, totalFacturado: 1144802.10, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "FEBRERO - MARZO", consumoBaseKwh: 245609, consumoIntermedioKwh: 130406, consumoPuntaKwh: 31232, demandaBaseKw: 3423, demandaIntermedioKw: 2978, demandaPuntaKw: 2564, demandaMaximaKw: 3423, factorPotencia: 99.98, costoPorKw: 2.88, suministro: 540.49, distribucion: 58448.02, transmision: 73345.18, cenace: 3095.08, generacionBase: 224830.48, generacionIntermedia: 213683.27, generacionPunta: 60777.47, capacidad: 386571.86, scnmem: 2810.00, bonificacionFactorPotencia: -12289.22, totalFacturado: 1173702.75, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "MARZO - ABRIL", consumoBaseKwh: 251353, consumoIntermedioKwh: 116029, consumoPuntaKwh: 31721, demandaBaseKw: 3377, demandaIntermedioKw: 2804, demandaPuntaKw: 2124, demandaMaximaKw: 3377, factorPotencia: 99.98, costoPorKw: 2.53, suministro: 540.49, distribucion: 59189.97, transmision: 71878.45, cenace: 3033.18, generacionBase: 230088.54, generacionIntermedia: 190113.52, generacionPunta: 61729.07, capacidad: 391459.65, scnmem: 2753.81, bonificacionFactorPotencia: -7075.50, totalFacturado: 1010786.68, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "ABRIL - MAYO", consumoBaseKwh: 246433, consumoIntermedioKwh: 132665, consumoPuntaKwh: 26310, demandaBaseKw: 3111, demandaIntermedioKw: 2994, demandaPuntaKw: 2057, demandaMaximaKw: 3111, factorPotencia: 99.98, costoPorKw: 2.86, suministro: 540.49, distribucion: 58143.92, transmision: 73013.98, cenace: 3081.10, generacionBase: 223342.23, generacionIntermedia: 215195.90, generacionPunta: 50686.22, capacidad: 380698.32, scnmem: 2797.32, bonificacionFactorPotencia: -7052.50, totalFacturado: 1160519.22, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "MAYO - JUNIO", consumoBaseKwh: 156568, consumoIntermedioKwh: 78240, consumoPuntaKwh: 15772, demandaBaseKw: 3166, demandaIntermedioKw: 2824, demandaPuntaKw: 2103, demandaMaximaKw: 3166, factorPotencia: 99.98, costoPorKw: 2.87, suministro: 540.49, distribucion: 37161.02, transmision: 45129.46, cenace: 1904.41, generacionBase: 140472.81, generacionIntermedia: 125653.44, generacionPunta: 30083.51, capacidad: 240892.86, scnmem: 1729.01, bonificacionFactorPotencia: -4364.97, totalFacturado: 718274.59, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "JUNIO - JULIO", consumoBaseKwh: 297863, consumoIntermedioKwh: 129084, consumoPuntaKwh: 13359, demandaBaseKw: 3492, demandaIntermedioKw: 3271, demandaPuntaKw: 1501, demandaMaximaKw: 3492, factorPotencia: 99.96, costoPorKw: 2.72, suministro: 540.49, distribucion: 63191.98, transmision: 79299.12, cenace: 3346.33, generacionBase: 261910.94, generacionIntermedia: 203165.31, generacionPunta: 24970.64, capacidad: 401438.43, scnmem: 3038.11, bonificacionFactorPotencia: -7286.31, totalFacturado: 1198994.04, unidadesBYD: 55, unidadesSunwin: 16 },
+  { anio: "2026", periodo: "JULIO - AGOSTO", consumoBaseKwh: 324343, consumoIntermedioKwh: 129924, consumoPuntaKwh: 11396, demandaBaseKw: 3518, demandaIntermedioKw: 3163, demandaPuntaKw: 1393, demandaMaximaKw: 3518, factorPotencia: 99.96, costoPorKw: 2.71, suministro: 540.49, distribucion: 66841.18, transmision: 83865.90, cenace: 3539.04, generacionBase: 285194.80, generacionIntermedia: 204487.38, generacionPunta: 21301.40, capacidad: 424631.62, scnmem: 3213.08, bonificacionFactorPotencia: -7655.30, totalFacturado: 1259713.16, unidadesBYD: 55, unidadesSunwin: 22 }
+];
+
 let chartConsumoSemanalInstance = null;
 let chartFacturadoInstance = null;
 let chartConsumoInstance = null;
 
-// Fallback de datos para Análisis CFE si no encuentra el JSON
-const FALLBACK_DATA = [
-  { "anio": "2025", "periodo": "MAYO - JUNIO", "consumoBaseKwh": 226118, "consumoIntermedioKwh": 90668, "consumoPuntaKwh": 8795, "demandaBaseKw": 3386, "demandaIntermedioKw": 2476, "demandaPuntaKw": 1924, "demandaMaximaKw": 3386, "factorPotencia": 99.95, "costoPorKw": 3.09, "suministro": 466.83, "distribucion": 50911.28, "transmision": 58897.61, "cenace": 2116.28, "generacionBase": 227904.33, "generacionIntermedia": 163574.14, "generacionPunta": 18845.05, "capacidad": 351662.60, "scnmem": 2018.60, "bonificacionFactorPotencia": -10516.76, "totalFacturado": 1004421.19, "unidadesBYD": 55, "unidadesSunwin": 16 },
-  { "anio": "2025", "periodo": "JUNIO - JULIO", "consumoBaseKwh": 262357, "consumoIntermedioKwh": 93990, "consumoPuntaKwh": 988, "demandaBaseKw": 3534, "demandaIntermedioKw": 2857, "demandaPuntaKw": 612, "demandaMaximaKw": 3534, "factorPotencia": 99.93, "costoPorKw": 2.70, "suministro": 466.83, "distribucion": 54053.16, "transmision": 64641.90, "cenace": 2322.68, "generacionBase": 268391.21, "generacionIntermedia": 172114.49, "generacionPunta": 2148.70, "capacidad": 275118.48, "scnmem": 2215.48, "bonificacionFactorPotencia": -10097.68, "totalFacturado": 964395.48, "unidadesBYD": 55, "unidadesSunwin": 16 },
-  { "anio": "2026", "periodo": "JULIO - AGOSTO", "consumoBaseKwh": 324343, "consumoIntermedioKwh": 129924, "consumoPuntaKwh": 11396, "demandaBaseKw": 3518, "demandaIntermedioKw": 3163, "demandaPuntaKw": 1393, "demandaMaximaKw": 3518, "factorPotencia": 99.96, "costoPorKw": 2.71, "suministro": 540.49, "distribucion": 66841.18, "transmision": 83865.90, "cenace": 3539.04, "generacionBase": 285194.80, "generacionIntermedia": 204487.38, "generacionPunta": 21301.40, "capacidad": 424631.62, "scnmem": 3213.08, "bonificacionFactorPotencia": -7655.30, "totalFacturado": 1259713.16, "unidadesBYD": 55, "unidadesSunwin": 22 }
-];
-
+// Escuchador global de vistas
 window.initViewCharts = function(viewName) {
   if (viewName === 'home') {
     initHomeChart();
   } else if (viewName === 'analisis-cfe') {
-    initCfeProcess();
+    // Breve pausa para asegurar renderizado del DOM
+    setTimeout(poblarSelectoresCFE, 80);
   }
 };
 
-// --- VISTA HOME ---
+// --- GRÁFICO HOME ---
 function initHomeChart() {
   const ctx = document.getElementById('chartConsumoSemanal');
   if (!ctx || typeof Chart === 'undefined') return;
@@ -46,33 +59,19 @@ function initHomeChart() {
   });
 }
 
-// --- VISTA ANÁLISIS CFE ---
-async function initCfeProcess() {
-  try {
-    const res = await fetch('/data/facturas_cfe.json');
-    if (res.ok) {
-      datosExcelGlobal = await res.json();
-    } else {
-      datosExcelGlobal = FALLBACK_DATA;
-    }
-  } catch (err) {
-    datosExcelGlobal = FALLBACK_DATA;
-  }
-
-  poblarSelectores();
-}
-
-function poblarSelectores() {
+// --- POBLAR VISTA ANÁLISIS CFE ---
+function poblarSelectoresCFE() {
   const selectAnio = document.getElementById('selectAnio');
   const selectPeriodo = document.getElementById('selectPeriodo');
   if (!selectAnio || !selectPeriodo) return;
 
-  const anios = [...new Set(datosExcelGlobal.map(d => String(d.anio)))];
+  // Llenar selector de Años
+  const anios = [...new Set(DATA_CFE.map(d => String(d.anio)))];
   selectAnio.innerHTML = anios.map(a => `<option value="${a}">${a}</option>`).join('');
 
   function actualizarPeriodos() {
     const anioSel = selectAnio.value;
-    const registrosAnio = datosExcelGlobal.filter(d => String(d.anio) === anioSel);
+    const registrosAnio = DATA_CFE.filter(d => String(d.anio) === anioSel);
     
     selectPeriodo.innerHTML = registrosAnio.map(p => `<option value="${p.periodo}">${p.periodo}</option>`).join('');
     
@@ -83,7 +82,7 @@ function poblarSelectores() {
 
   selectAnio.onchange = actualizarPeriodos;
   selectPeriodo.onchange = () => {
-    const seleccionado = datosExcelGlobal.find(d => String(d.anio) === selectAnio.value && d.periodo === selectPeriodo.value);
+    const seleccionado = DATA_CFE.find(d => String(d.anio) === selectAnio.value && d.periodo === selectPeriodo.value);
     if (seleccionado) actualizarVistaFactura(seleccionado);
   };
 
@@ -100,6 +99,7 @@ function actualizarVistaFactura(f) {
 
   el('tituloPeriodo').innerText = `COSTE ENERGÍA ELÉCTRICA ${f.periodo} (DESGLOSE)`;
 
+  // Consumos y Demandas
   el('cBase').innerText = fmtNum(f.consumoBaseKwh);
   el('cInter').innerText = fmtNum(f.consumoIntermedioKwh);
   el('cPunta').innerText = fmtNum(f.consumoPuntaKwh);
@@ -112,6 +112,7 @@ function actualizarVistaFactura(f) {
   el('dPunta').innerText = fmtNum(f.demandaPuntaKw);
   el('dMax').innerText = fmtNum(f.demandaMaximaKw);
 
+  // Indicadores
   el('costoKw').innerText = fmtMoney(f.costoPorKw);
   
   let fpVal = f.factorPotencia || 0;
@@ -121,6 +122,7 @@ function actualizarVistaFactura(f) {
   el('uByd').innerText = f.unidadesBYD || 0;
   el('uSunwin').innerText = f.unidadesSunwin || 0;
 
+  // Desglose CFE
   el('fSuministro').innerText = fmtMoney(f.suministro);
   el('fDistribucion').innerText = fmtMoney(f.distribucion);
   el('fTransmision').innerText = fmtMoney(f.transmision);
@@ -134,6 +136,7 @@ function actualizarVistaFactura(f) {
   const totalEnergia = (f.suministro || 0) + (f.distribucion || 0) + (f.transmision || 0) + (f.cenace || 0) + (f.generacionBase || 0) + (f.generacionIntermedia || 0) + (f.generacionPunta || 0) + (f.capacidad || 0) + (f.scnmem || 0);
   el('fTotalEnergia').innerText = fmtMoney(totalEnergia);
 
+  // Resumen
   el('rCargoFijo').innerText = fmtMoney(f.suministro);
   el('rEnergia').innerText = fmtMoney(totalEnergia - (f.suministro || 0));
   el('rBonif').innerText = fmtMoney(f.bonificacionFactorPotencia);
@@ -153,8 +156,8 @@ function renderGraficosHistoricos() {
   if (chartFacturadoInstance) chartFacturadoInstance.destroy();
   if (chartConsumoInstance) chartConsumoInstance.destroy();
 
-  const labels = datosExcelGlobal.map(d => d.periodo ? d.periodo.split('-')[0].trim() : '');
-  const facturado = datosExcelGlobal.map(d => d.totalFacturado || 0);
+  const labels = DATA_CFE.map(d => d.periodo ? d.periodo.split('-')[0].trim() : '');
+  const facturado = DATA_CFE.map(d => d.totalFacturado || 0);
 
   chartFacturadoInstance = new Chart(ctx1, {
     type: 'bar',
@@ -170,9 +173,9 @@ function renderGraficosHistoricos() {
     data: {
       labels: labels,
       datasets: [
-        { label: 'Base', data: datosExcelGlobal.map(d => d.consumoBaseKwh || 0), backgroundColor: '#059669' },
-        { label: 'Intermedio', data: datosExcelGlobal.map(d => d.consumoIntermedioKwh || 0), backgroundColor: '#0284c7' },
-        { label: 'Punta', data: datosExcelGlobal.map(d => d.consumoPuntaKwh || 0), backgroundColor: '#d97706' }
+        { label: 'Base', data: DATA_CFE.map(d => d.consumoBaseKwh || 0), backgroundColor: '#059669' },
+        { label: 'Intermedio', data: DATA_CFE.map(d => d.consumoIntermedioKwh || 0), backgroundColor: '#0284c7' },
+        { label: 'Punta', data: DATA_CFE.map(d => d.consumoPuntaKwh || 0), backgroundColor: '#d97706' }
       ]
     },
     options: {
