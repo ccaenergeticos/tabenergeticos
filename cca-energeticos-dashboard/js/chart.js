@@ -1,4 +1,4 @@
-// URL pública de exportación en formato CSV de tu Google Sheet
+// Endpoint de Google Sheets utilizando la Google Visualization API para exportación CSV
 const GOOGLE_SHEET_ID = "1P9lEX2BzIqvlCXeV2CRgrMufqOIvb6V6";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv`;
 
@@ -6,6 +6,7 @@ let datosExcelGlobal = [];
 let chartFacturadoInstance = null;
 let chartConsumoInstance = null;
 
+// Escuchador que ejecuta Cloudflare al cambiar de vista
 window.initViewCharts = function(viewName) {
   if (viewName === 'analisis-cfe') {
     cargarDatosDesdeGoogleSheets();
@@ -15,32 +16,34 @@ window.initViewCharts = function(viewName) {
 async function cargarDatosDesdeGoogleSheets() {
   try {
     const res = await fetch(CSV_URL);
-    if (!res.ok) throw new Error("No se pudo obtener respuesta del CSV de Google Sheets");
+    if (!res.ok) throw new Error("Error en la conexión a Google Sheets");
     
     const csvData = await res.text();
-    datosExcelGlobal = procesarCSVGoogleSheets(csvData);
+    datosExcelGlobal = parsearCSVGoogle(csvData);
 
     if (datosExcelGlobal.length === 0) {
-      console.warn("No se encontraron filas válidas en el Excel.");
+      console.warn("No se parsearon registros válidos del CSV.");
       return;
     }
 
     poblarSelectores();
   } catch (err) {
-    console.error("Error al cargar desde Google Sheets:", err);
+    console.error("Error cargando Google Sheets:", err);
   }
 }
 
-// Lector de CSV robusto para Google Sheets (maneja comillas y comas internas)
-function procesarCSVGoogleSheets(text) {
+// Parser avanzado para el formato CSV de Google Sheets
+function parsearCSVGoogle(text) {
   const lineas = text.split(/\r\n|\n/);
   const resultado = [];
 
-  // Función para limpiar celdas (quita comillas de más y símbolos numéricos)
-  const parseVal = (val) => {
+  // Función para convertir valores numéricos con $, %, comas y espacios
+  const parseNum = (val) => {
     if (!val) return 0;
-    let clean = val.replace(/"/g, '').replace(/[\$\,\%\s]/g, '');
-    return parseFloat(clean) || 0;
+    let esNegativo = val.includes('-');
+    let clean = val.replace(/[^0-9.]/g, '');
+    let num = parseFloat(clean) || 0;
+    return esNegativo ? -num : num;
   };
 
   const cleanText = (val) => (val ? val.replace(/"/g, '').trim() : '');
@@ -50,37 +53,38 @@ function procesarCSVGoogleSheets(text) {
     const linea = lineas[i].trim();
     if (!linea) continue;
 
-    // Regexp para parsear campos CSV delimitados por comas respetando comillas
-    const columnas = linea.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || linea.split(',');
-    
-    if (columnas.length >= 23) {
-      resultado.push({
-        anio: cleanText(columnas[0]),
-        periodo: cleanText(columnas[1]),
-        consumoBaseKwh: parseVal(columnas[2]),
-        consumoIntermedioKwh: parseVal(columnas[3]),
-        consumoPuntaKwh: parseVal(columnas[4]),
-        demandaBaseKw: parseVal(columnas[5]),
-        demandaIntermedioKw: parseVal(columnas[6]),
-        demandaPuntaKw: parseVal(columnas[7]),
-        demandaMaximaKw: parseVal(columnas[8]),
-        factorPotencia: parseVal(columnas[9]),
-        costoPorKw: parseVal(columnas[10]),
-        suministro: parseVal(columnas[11]),
-        distribucion: parseVal(columnas[12]),
-        transmision: parseVal(columnas[13]),
-        cenace: parseVal(columnas[14]),
-        generacionBase: parseVal(columnas[15]),
-        generacionIntermedia: parseVal(columnas[16]),
-        generacionPunta: parseVal(columnas[17]),
-        capacidad: parseVal(columnas[18]),
-        scnmem: parseVal(columnas[19]),
-        bonificacionFactorPotencia: parseVal(columnas[20]),
-        totalFacturado: parseVal(columnas[21]),
-        unidadesBYD: parseVal(columnas[22]),
-        unidadesSunwin: parseVal(columnas[23])
-      });
-    }
+    // Regexp para separar correctamente respetando cadenas entre comillas
+    const cols = linea.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+    if (cols.length < 23) continue;
+
+    const c = cols.map(col => col.replace(/^"|"$/g, '').trim());
+
+    resultado.push({
+      anio: c[0],
+      periodo: c[1],
+      consumoBaseKwh: parseNum(c[2]),
+      consumoIntermedioKwh: parseNum(c[3]),
+      consumoPuntaKwh: parseNum(c[4]),
+      demandaBaseKw: parseNum(c[5]),
+      demandaIntermedioKw: parseNum(c[6]),
+      demandaPuntaKw: parseNum(c[7]),
+      demandaMaximaKw: parseNum(c[8]),
+      factorPotencia: parseNum(c[9]),
+      costoPorKw: parseNum(c[10]),
+      suministro: parseNum(c[11]),
+      distribucion: parseNum(c[12]),
+      transmision: parseNum(c[13]),
+      cenace: parseNum(c[14]),
+      generacionBase: parseNum(c[15]),
+      generacionIntermedia: parseNum(c[16]),
+      generacionPunta: parseNum(c[17]),
+      capacidad: parseNum(c[18]),
+      scnmem: parseNum(c[19]),
+      bonificacionFactorPotencia: parseNum(c[20]),
+      totalFacturado: parseNum(c[21]),
+      unidadesBYD: parseNum(c[22]),
+      unidadesSunwin: parseNum(c[23])
+    });
   }
   return resultado;
 }
@@ -90,7 +94,7 @@ function poblarSelectores() {
   const selectPeriodo = document.getElementById('selectPeriodo');
   if (!selectAnio || !selectPeriodo) return;
 
-  // Extraer Años únicos
+  // Llenar Años únicos
   const anios = [...new Set(datosExcelGlobal.map(d => d.anio))].filter(a => a !== "");
   selectAnio.innerHTML = anios.map(a => `<option value="${a}">${a}</option>`).join('');
 
@@ -111,7 +115,6 @@ function poblarSelectores() {
     if (seleccionado) actualizarVistaFactura(seleccionado);
   };
 
-  // Carga inicial
   actualizarPeriodos();
   renderGraficosHistoricos();
 }
@@ -138,7 +141,7 @@ function actualizarVistaFactura(f) {
   el('dPunta').innerText = fmtNum(f.demandaPuntaKw);
   el('dMax').innerText = fmtNum(f.demandaMaximaKw);
 
-  // Indicadores
+  // Indicadores Técnicos
   el('costoKw').innerText = fmtMoney(f.costoPorKw);
   el('factorPotencia').innerText = `${f.factorPotencia}%`;
 
@@ -159,7 +162,7 @@ function actualizarVistaFactura(f) {
   const totalEnergia = f.suministro + f.distribucion + f.transmision + f.cenace + f.generacionBase + f.generacionIntermedia + f.generacionPunta + f.capacidad + f.scnmem;
   el('fTotalEnergia').innerText = fmtMoney(totalEnergia);
 
-  // Resumen Pago
+  // Resumen de Pago
   el('rCargoFijo').innerText = fmtMoney(f.suministro);
   el('rEnergia').innerText = fmtMoney(totalEnergia - f.suministro);
   el('rBonif').innerText = fmtMoney(f.bonificacionFactorPotencia);
