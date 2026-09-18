@@ -1,104 +1,28 @@
-// URL de descarga directa en formato Excel de tu archivo de Google Drive
-const EXCEL_DRIVE_URL = "https://docs.google.com/spreadsheets/d/1P9lEX2BzIqvlCXeV2CRgrMufqOIvb6V6/export?format=xlsx";
-
 let datosExcelGlobal = [];
 let chartFacturadoInstance = null;
 let chartConsumoInstance = null;
 
-// Cargar script de SheetJS dinámicamente si no existe
-function cargarLibreriaXLSX(callback) {
-  if (window.XLSX) {
-    callback();
-    return;
-  }
-  const script = document.createElement('script');
-  script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
-  script.onload = callback;
-  document.head.appendChild(script);
-}
-
+// Método invocado automáticamente al seleccionar la vista "analisis-cfe"
 window.initViewCharts = function(viewName) {
   if (viewName === 'analisis-cfe') {
-    cargarLibreriaXLSX(() => {
-      // Esperar brevemente a que el DOM inyecte los elementos HTML de views/analisis-cfe.html
-      setTimeout(cargarDatosDesdeExcelDrive, 150);
-    });
+    // Breve espera para asegurar que el HTML de views/analisis-cfe.html esté renderizado en el DOM
+    setTimeout(cargarDatosJSON, 100);
   }
 };
 
-async function cargarDatosDesdeExcelDrive() {
+async function cargarDatosJSON() {
   try {
-    const response = await fetch(EXCEL_DRIVE_URL);
-    if (!response.ok) throw new Error("No se pudo descargar el archivo Excel de Drive");
-
-    const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    // Carga directa del archivo JSON alojado en tu repositorio de GitHub
+    const res = await fetch('/data/facturas_cfe.json');
+    if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
     
-    // Obtener la primera hoja de cálculo
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    
-    // Convertir hoja a JSON de objetos
-    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-    
-    procesarFilasExcel(jsonRows);
-  } catch (err) {
-    console.error("Error al leer el archivo Excel de Google Drive:", err);
-  }
-}
+    datosExcelGlobal = await res.json();
 
-function procesarFilasExcel(rows) {
-  datosExcelGlobal = [];
-
-  const parseNum = (val) => {
-    if (typeof val === 'number') return val;
-    if (!val) return 0;
-    let str = String(val).replace(/[^0-9.-]/g, '');
-    return parseFloat(str) || 0;
-  };
-
-  rows.forEach(r => {
-    // Buscar propiedades sin importar espacios o mayúsculas
-    const getCol = (keyName) => {
-      const match = Object.keys(r).find(k => k.trim().toLowerCase() === keyName.toLowerCase());
-      return match ? r[match] : "";
-    };
-
-    const anio = String(getCol("Año") || getCol("Anio")).trim();
-    const periodo = String(getCol("Periodo")).trim();
-
-    if (anio && periodo) {
-      datosExcelGlobal.push({
-        anio: anio,
-        periodo: periodo,
-        consumoBaseKwh: parseNum(getCol("ConsumoBaseKwh")),
-        consumoIntermedioKwh: parseNum(getCol("ConsumoIntermedioKwh")),
-        consumoPuntaKwh: parseNum(getCol("ConsumoPuntaKwh")),
-        demandaBaseKw: parseNum(getCol("DemandaBaseKw")),
-        demandaIntermedioKw: parseNum(getCol("DemandaIntermedioKw")),
-        demandaPuntaKw: parseNum(getCol("DemandaPuntaKw")),
-        demandaMaximaKw: parseNum(getCol("DemandaMaximaKw")),
-        factorPotencia: parseNum(getCol("FactorPotencia")),
-        costoPorKw: parseNum(getCol("CostoPorKw")),
-        suministro: parseNum(getCol("Suministro")),
-        distribucion: parseNum(getCol("Distribucion")),
-        transmision: parseNum(getCol("Transmision")),
-        cenace: parseNum(getCol("Cenace")),
-        generacionBase: parseNum(getCol("GeneracionBase")),
-        generacionIntermedia: parseNum(getCol("GeneracionIntermedia")),
-        generacionPunta: parseNum(getCol("GeneracionPunta")),
-        capacidad: parseNum(getCol("Capacidad")),
-        scnmem: parseNum(getCol("Scnmem")),
-        bonificacionFactorPotencia: parseNum(getCol("BonificacionFactorPotencia")),
-        totalFacturado: parseNum(getCol("TotalFacturado")),
-        unidadesBYD: parseNum(getCol("UnidadesBYD")),
-        unidadesSunwin: parseNum(getCol("UnidadesSunwin"))
-      });
+    if (datosExcelGlobal.length > 0) {
+      poblarSelectores();
     }
-  });
-
-  if (datosExcelGlobal.length > 0) {
-    poblarSelectores();
+  } catch (err) {
+    console.error("Error al cargar data/facturas_cfe.json desde GitHub:", err);
   }
 }
 
@@ -107,8 +31,8 @@ function poblarSelectores() {
   const selectPeriodo = document.getElementById('selectPeriodo');
   if (!selectAnio || !selectPeriodo) return;
 
-  // Extraer Años únicos
-  const anios = [...new Set(datosExcelGlobal.map(d => d.anio))].filter(a => a !== "");
+  // Llenar Años únicos disponibles
+  const anios = [...new Set(datosExcelGlobal.map(d => d.anio))];
   selectAnio.innerHTML = anios.map(a => `<option value="${a}">${a}</option>`).join('');
 
   function actualizarPeriodos() {
@@ -154,9 +78,9 @@ function actualizarVistaFactura(f) {
   el('dPunta').innerText = fmtNum(f.demandaPuntaKw);
   el('dMax').innerText = fmtNum(f.demandaMaximaKw);
 
-  // Indicadores Técnicos
+  // Indicadores
   el('costoKw').innerText = fmtMoney(f.costoPorKw);
-  el('factorPotencia').innerText = `${(f.factorPotencia > 1 ? f.factorPotencia : f.factorPotencia * 100).toFixed(2)}%`;
+  el('factorPotencia').innerText = `${f.factorPotencia}%`;
 
   el('uByd').innerText = f.unidadesBYD;
   el('uSunwin').innerText = f.unidadesSunwin;
@@ -175,7 +99,7 @@ function actualizarVistaFactura(f) {
   const totalEnergia = f.suministro + f.distribucion + f.transmision + f.cenace + f.generacionBase + f.generacionIntermedia + f.generacionPunta + f.capacidad + f.scnmem;
   el('fTotalEnergia').innerText = fmtMoney(totalEnergia);
 
-  // Resumen de Pago
+  // Resumen
   el('rCargoFijo').innerText = fmtMoney(f.suministro);
   el('rEnergia').innerText = fmtMoney(totalEnergia - f.suministro);
   el('rBonif').innerText = fmtMoney(f.bonificacionFactorPotencia);
