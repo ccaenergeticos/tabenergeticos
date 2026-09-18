@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCA - ENERGÉTICOS | Centro de Control</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Estilos Custom -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-[#0b0f19] text-gray-200 font-sans flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="w-64 bg-[#0d1322] border-r border-slate-800/60 flex flex-col justify-between select-none">
+    <div>
+      <!-- Header / Logo -->
+      <div class="p-5 flex items-center space-x-3 border-b border-slate-800/40">
+        <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-slate-100 text-sm tracking-wider">CCA - ENERGÉTICOS</h1>
+          <p class="text-[10px] text-emerald-400 font-medium tracking-widest uppercase">Centro de Control</p>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="p-3 space-y-6 text-xs">
+        <!-- Section: General -->
+        <div>
+          <p class="px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">General</p>
+          <a href="#" data-view="home" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800/60 transition active-nav">
+            <i class="fa-solid fa-house w-5 text-center text-emerald-400"></i>
+            <span>HOME</span>
+          </a>
+        </div>
+
+        <!-- Section: Registros -->
+        <div>
+          <p class="px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Registros</p>
+          <div class="space-y-1">
+            <a href="#" data-view="bitacora-diesel" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-truck-field w-5 text-center"></i>
+              <span>Bitácora Diésel</span>
+            </a>
+            <a href="#" data-view="bitacora-electrica" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-plug-circle-bolt w-5 text-center"></i>
+              <span>Bitácora Eléctrica</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Section: Análisis Métrico -->
+        <div>
+          <p class="px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Análisis Métrico</p>
+          <div class="space-y-1">
+            <a href="#" data-view="analisis-cfe" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-chart-line w-5 text-center"></i>
+              <span>Análisis CFE</span>
+            </a>
+            <a href="#" data-view="resumen-diesel" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-gas-pump w-5 text-center"></i>
+              <span>Resumen Diésel</span>
+            </a>
+            <a href="#" data-view="resumen-electricas" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-charging-station w-5 text-center"></i>
+              <span>Resumen Eléctricas</span>
+            </a>
+            <a href="#" data-view="mapa-cargadores" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-map-location-dot w-5 text-center"></i>
+              <span>Mapa Cargadores</span>
+            </a>
+            <a href="#" data-view="tiempos-carga" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+              <span>Tiempos de Carga</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Section: Monitoreo -->
+        <div>
+          <p class="px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Monitoreo</p>
+          <div class="space-y-1">
+            <a href="#" data-view="monitoreo-byd" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-bus w-5 text-center"></i>
+              <span>Monitoreo BYD</span>
+            </a>
+            <a href="#" data-view="monitoreo-enel" class="nav-btn flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium text-slate-400 hover:bg-slate-800/60 transition">
+              <i class="fa-solid fa-tower-cell w-5 text-center"></i>
+              <span>Monitoreo ENEL</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- MAIN VIEW AREA -->
+  <main id="main-content" class="flex-1 h-screen overflow-y-auto p-8 bg-[#0b0f19]">
+    <!-- Aquí se inyectan dinámicamente los archivos de views/ -->
+  </main>
+
+  <script src="js/app.js"></script>
+  <script src="js/charts.js"></script>
+</body>
+</html>

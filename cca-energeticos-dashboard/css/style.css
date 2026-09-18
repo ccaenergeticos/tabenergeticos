@@ -1,0 +1,22 @@
+/* Scrollbar personalizada para apariencia Dashboard */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Estado activo para botones del Sidebar */
+.active-nav {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+  color: #ffffff !important;
+  border-left: 3px solid #10b981;
+}

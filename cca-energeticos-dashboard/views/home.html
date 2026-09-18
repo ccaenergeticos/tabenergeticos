@@ -1,0 +1,84 @@
+<div class="space-y-6">
+  <!-- Header de Vista -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-3xl font-extrabold text-white tracking-tight">DASHBOARDS</h2>
+      <p class="text-slate-400 text-xs mt-1">Panel de control operativo y rendimiento energético</p>
+    </div>
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> VISTA EN TIEMPO REAL
+    </span>
+  </div>
+
+  <!-- Métricas Superiores -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <!-- Unidades Diésel -->
+    <div class="bg-[#131b2e] border border-slate-800/80 rounded-xl p-5 shadow-lg">
+      <p class="text-xs text-slate-400 font-medium">Unidades Diésel <i class="fa-solid fa-truck-front ml-1"></i></p>
+      <p class="text-3xl font-bold text-white my-2">42 <span class="text-xl text-slate-500 font-normal">/ 45</span></p>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 mb-2 overflow-hidden">
+        <div class="bg-emerald-500 h-1.5 rounded-full" style="width: 93.3%"></div>
+      </div>
+      <p class="text-[11px] text-emerald-400 font-medium">93.3% de la flota operativa</p>
+    </div>
+
+    <!-- Unidades Eléctricas -->
+    <div class="bg-[#131b2e] border border-slate-800/80 rounded-xl p-5 shadow-lg">
+      <p class="text-xs text-slate-400 font-medium">Unidades Eléctricas <i class="fa-solid fa-bolt text-cyan-400 ml-1"></i></p>
+      <p class="text-3xl font-bold text-white my-2">18 <span class="text-xl text-slate-500 font-normal">/ 20</span></p>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 mb-2 overflow-hidden">
+        <div class="bg-cyan-500 h-1.5 rounded-full" style="width: 90%"></div>
+      </div>
+      <p class="text-[11px] text-cyan-400 font-medium">Carga prom. 90% (350 kWh)</p>
+    </div>
+
+    <!-- Rendimiento Global -->
+    <div class="bg-[#131b2e] border border-slate-800/80 rounded-xl p-5 shadow-lg">
+      <p class="text-xs text-slate-400 font-medium">Rendimiento Global <i class="fa-solid fa-chart-line text-amber-400 ml-1"></i></p>
+      <p class="text-3xl font-bold text-white my-2">94.2%</p>
+      <div class="w-full bg-slate-800 rounded-full h-1.5 mb-2 overflow-hidden">
+        <div class="bg-amber-500 h-1.5 rounded-full" style="width: 94.2%"></div>
+      </div>
+      <p class="text-[11px] text-amber-400 font-medium">+2.4% vs el mes anterior</p>
+    </div>
+  </div>
+
+  <!-- Sección Gráfica y Distribución -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <!-- Consumo Energético -->
+    <div class="lg:col-span-2 bg-[#131b2e] border border-slate-800/80 rounded-xl p-5 shadow-lg">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-semibold text-white">Consumo Energético Semanal</h3>
+        <div class="flex items-center space-x-4 text-xs">
+          <span class="flex items-center gap-1.5 text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Diésel</span>
+          <span class="flex items-center gap-1.5 text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block"></span> Eléctrico</span>
+        </div>
+      </div>
+      <div class="h-64 relative">
+        <canvas id="chartConsumoSemanal"></canvas>
+      </div>
+    </div>
+
+    <!-- Distribución de Flota -->
+    <div class="bg-[#131b2e] border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between">
+      <div>
+        <h3 class="text-sm font-semibold text-white mb-4">Distribución de Flota</h3>
+        <div class="space-y-3">
+          <div class="bg-[#0b0f19] border border-slate-800 p-3 rounded-lg flex items-center justify-between text-xs">
+            <span class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-bus text-slate-400"></i> Unidades a Diésel</span>
+            <span class="font-bold text-emerald-400">69%</span>
+          </div>
+          <div class="bg-[#0b0f19] border border-slate-800 p-3 rounded-lg flex items-center justify-between text-xs">
+            <span class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-bolt text-cyan-400"></i> Unidades Eléctricas</span>
+            <span class="font-bold text-cyan-400">31%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-950/40 border border-amber-600/30 p-3 rounded-lg flex items-center gap-3 text-xs text-amber-400 mt-4">
+        <i class="fa-solid fa-triangle-exclamation text-base"></i>
+        <span>Alertas de Mantenimiento: <strong>2 Activas</strong></span>
+      </div>
+    </div>
+  </div>
+</div>
