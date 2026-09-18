@@ -1,30 +1,25 @@
-<!-- CDN para lectura directa de archivos Excel/CSV -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 <div class="space-y-6">
   <!-- ENCABEZADO Y SELECTORES -->
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
       <h2 class="text-2xl font-bold text-white tracking-tight">Análisis Facturación CFE</h2>
-      <p class="text-slate-400 text-xs mt-1">Histórico y desglose de tarifas de energía eléctrica</p>
+      <p class="text-slate-400 text-xs mt-1">Histórico y desglose de tarifas de energía eléctrica (Gran Demanda MTH)</p>
     </div>
 
     <div class="flex items-center gap-3">
       <!-- Selector Año -->
       <div class="bg-[#1e293b] border border-slate-700/60 rounded-xl px-3 py-1.5 flex items-center space-x-2 shadow-md">
         <label class="text-xs font-bold text-slate-200">Año</label>
-        <select id="selectAnio" class="bg-white text-slate-900 font-bold text-xs rounded px-2 py-1 border border-slate-500 focus:outline-none">
-          <option value="2026">2026</option>
-          <option value="2025">2025</option>
+        <select id="selectAnio" class="bg-slate-900 text-white font-bold text-xs rounded px-2 py-1 border border-slate-600 focus:outline-none">
+          <!-- Se llena dinámicamente desde el Excel -->
         </select>
       </div>
 
       <!-- Selector Período -->
       <div class="bg-[#1e293b] border border-slate-700/60 rounded-xl px-3 py-1.5 flex items-center space-x-2 shadow-md">
         <label class="text-xs font-bold text-slate-200">Período</label>
-        <select id="selectPeriodo" class="bg-white text-slate-900 font-bold text-xs rounded px-2 py-1 border border-slate-500 focus:outline-none">
-          <option value="Ene 2026">Ene 2026</option>
-          <option value="Feb 2026">Feb 2026</option>
+        <select id="selectPeriodo" class="bg-slate-900 text-white font-bold text-xs rounded px-2 py-1 border border-slate-600 focus:outline-none">
+          <!-- Se llena dinámicamente desde el Excel -->
         </select>
       </div>
     </div>
@@ -32,7 +27,7 @@
 
   <!-- TÍTULO DEL DESGLOSE ACTIVO -->
   <div class="bg-[#1e293b] border border-slate-700/60 rounded-xl p-3 text-center shadow-md">
-    <h3 id="tituloPeriodo" class="text-emerald-400 font-bold text-sm tracking-wide">
+    <h3 id="tituloPeriodo" class="text-emerald-400 font-bold text-sm tracking-wide uppercase">
       COSTE ENERGÍA ELÉCTRICA (DESGLOSE)
     </h3>
   </div>
@@ -40,35 +35,47 @@
   <!-- SECCIÓN 1: TABLAS NUMÉRICAS (3 Columnas) -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
     
-    <!-- TABLA 1: Demanda y Consumos (4 Cols de Span) -->
-    <div class="lg:col-span-4 bg-[#1e293b] border border-slate-700/60 rounded-xl p-4 flex flex-col justify-between shadow-md">
+    <!-- TABLA 1: Demanda y Consumos -->
+    <div class="lg:col-span-5 bg-[#1e293b] border border-slate-700/60 rounded-xl p-4 flex flex-col justify-between shadow-md">
       <div>
         <h4 class="text-sky-400 font-bold text-xs mb-3">Consumo y Demanda</h4>
         <div class="grid grid-cols-4 gap-1 text-[11px] text-center">
           <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 rounded-l flex items-center justify-center">Base (kWh)</div>
           <div id="cBase" class="bg-[#0f172a] text-white p-1.5 font-semibold flex items-center justify-center">0</div>
-          <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 flex items-center justify-center">Dem. Base</div>
+          <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 flex items-center justify-center">Dem. Base (kW)</div>
           <div id="dBase" class="bg-[#0f172a] text-white p-1.5 font-semibold rounded-r flex items-center justify-center">0</div>
 
           <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 rounded-l flex items-center justify-center">Interm (kWh)</div>
           <div id="cInter" class="bg-[#0f172a] text-white p-1.5 font-semibold flex items-center justify-center">0</div>
-          <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 flex items-center justify-center">Dem. Inter</div>
+          <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 flex items-center justify-center">Dem. Interm (kW)</div>
           <div id="dInter" class="bg-[#0f172a] text-white p-1.5 font-semibold rounded-r flex items-center justify-center">0</div>
 
           <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 rounded-l flex items-center justify-center">Punta (kWh)</div>
           <div id="cPunta" class="bg-[#0f172a] text-white p-1.5 font-semibold flex items-center justify-center">0</div>
-          <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 flex items-center justify-center">Dem. Punta</div>
+          <div class="bg-emerald-900/60 text-emerald-300 font-bold p-1.5 flex items-center justify-center">Dem. Punta (kW)</div>
           <div id="dPunta" class="bg-[#0f172a] text-white p-1.5 font-semibold rounded-r flex items-center justify-center">0</div>
 
           <div class="bg-emerald-800 text-emerald-200 font-bold p-1.5 rounded-l flex items-center justify-center">Total (kWh)</div>
           <div id="cTotal" class="bg-[#0f172a] text-emerald-400 p-1.5 font-bold flex items-center justify-center">0</div>
-          <div class="bg-emerald-800 text-emerald-200 font-bold p-1.5 flex items-center justify-center">Dem. Máx</div>
+          <div class="bg-emerald-800 text-emerald-200 font-bold p-1.5 flex items-center justify-center">Dem. Máx (kW)</div>
           <div id="dMax" class="bg-[#0f172a] text-emerald-400 p-1.5 font-bold rounded-r flex items-center justify-center">0</div>
+        </div>
+
+        <!-- Indicadores Técnicos -->
+        <div class="grid grid-cols-2 gap-2 mt-3 text-xs">
+          <div class="bg-[#0f172a] border border-slate-800 p-2 rounded-lg">
+            <p class="text-[10px] text-slate-400 font-bold">Costo * kW</p>
+            <p id="costoKw" class="text-sm font-bold text-white mt-0.5">$0.00</p>
+          </div>
+          <div class="bg-[#0f172a] border border-slate-800 p-2 rounded-lg">
+            <p class="text-[10px] text-slate-400 font-bold">Factor Potencia</p>
+            <p id="factorPotencia" class="text-sm font-bold text-amber-400 mt-0.5">0.00%</p>
+          </div>
         </div>
       </div>
 
       <!-- Tarjetas Flotilla -->
-      <div class="grid grid-cols-2 gap-2 mt-4">
+      <div class="grid grid-cols-2 gap-2 mt-3">
         <div class="bg-[#0f172a] border border-sky-600/50 rounded-lg p-2.5 flex items-center justify-between">
           <div>
             <p class="text-[9px] font-black text-sky-400 uppercase">UNIDADES BYD</p>
@@ -86,29 +93,33 @@
       </div>
     </div>
 
-    <!-- TABLA 2: Desglose CFE MEM (5 Cols de Span) -->
-    <div class="lg:col-span-5 bg-[#1e293b] border border-slate-700/60 rounded-xl p-4 shadow-md text-xs">
+    <!-- TABLA 2: Desglose CFE MEM -->
+    <div class="lg:col-span-4 bg-[#1e293b] border border-slate-700/60 rounded-xl p-4 shadow-md text-xs">
       <h4 class="text-sky-400 font-bold mb-2">Desglose CFE MEM</h4>
-      <div class="space-y-1.5 text-slate-300 divide-y divide-slate-800">
+      <div class="space-y-1 text-slate-300 divide-y divide-slate-800/60">
         <div class="flex justify-between pt-1"><span>Suministro</span><span id="fSuministro">$0.00</span></div>
         <div class="flex justify-between pt-1"><span>Distribución</span><span id="fDistribucion">$0.00</span></div>
         <div class="flex justify-between pt-1"><span>Transmisión</span><span id="fTransmision">$0.00</span></div>
         <div class="flex justify-between pt-1"><span>CENACE</span><span id="fCenace">$0.00</span></div>
+        <div class="flex justify-between pt-1"><span>Generación Base</span><span id="fGenBase">$0.00</span></div>
+        <div class="flex justify-between pt-1"><span>Generación Intermedia</span><span id="fGenInter">$0.00</span></div>
+        <div class="flex justify-between pt-1"><span>Generación Punta</span><span id="fGenPunta">$0.00</span></div>
         <div class="flex justify-between pt-1"><span>Capacidad</span><span id="fCapacidad">$0.00</span></div>
-        <div class="flex justify-between pt-1 font-bold text-emerald-400 border-t border-slate-700 mt-2">
+        <div class="flex justify-between pt-1"><span>SCnMEM</span><span id="fScnmem">$0.00</span></div>
+        <div class="flex justify-between pt-1.5 font-bold text-emerald-400 border-t border-slate-700 mt-2">
           <span>Energía (Suma):</span><span id="fTotalEnergia">$0.00</span>
         </div>
       </div>
     </div>
 
-    <!-- TABLA 3: Resumen de Pago (3 Cols de Span) -->
+    <!-- TABLA 3: Resumen de Pago -->
     <div class="lg:col-span-3 bg-[#1e293b] border border-slate-700/60 rounded-xl p-4 flex flex-col justify-between shadow-md text-xs">
       <div>
         <h4 class="text-sky-400 font-bold mb-3">Resumen de Pago</h4>
         <div class="space-y-2 text-slate-300">
-          <div class="flex justify-between"><span>Cargo Fijo</span><span id="rCargoFijo">$0.00</span></div>
+          <div class="flex justify-between"><span>Cargo Fijo (Suministro)</span><span id="rCargoFijo">$0.00</span></div>
           <div class="flex justify-between"><span>Energía</span><span id="rEnergia">$0.00</span></div>
-          <div class="flex justify-between text-amber-400"><span>Bonif. F.P.</span><span id="rBonif">$0.00</span></div>
+          <div class="flex justify-between text-amber-400"><span>Bonificación F.P.</span><span id="rBonif">$0.00</span></div>
           <div class="flex justify-between font-bold text-white pt-1 border-t border-slate-800"><span>Subtotal</span><span id="rSubtotal">$0.00</span></div>
           <div class="flex justify-between"><span>IVA (16%)</span><span id="rIva">$0.00</span></div>
         </div>
@@ -122,7 +133,7 @@
 
   </div>
 
-  <!-- SECCIÓN 2: HISTOGRAMAS Y GRÁFICOS HISTÓRICOS -->
+  <!-- SECCIÓN 2: HISTOGRAMAS HISTÓRICOS -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
     <div class="bg-[#1e293b] border border-slate-700/60 rounded-xl p-4 shadow-md">
       <h4 class="text-sky-400 font-bold text-xs mb-3">Total Facturado por Período (MXN)</h4>
